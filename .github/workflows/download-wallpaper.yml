@@ -1,6 +1,5 @@
 name: Download wallpaper
 on:
-  push:
   schedule:
     - cron: '0 1 * * *'
 jobs:
