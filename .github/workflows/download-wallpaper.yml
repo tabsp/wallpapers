@@ -1,7 +1,8 @@
 name: Download wallpaper
 on:
+  workflow_dispatch:
   schedule:
-    - cron: '25 8 * * *'
+    - cron: '33 8 * * *'
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
