@@ -20,9 +20,10 @@ jobs:
         python wallpaper.py
     - name: Commit
       run: |
+        git add .
         git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
-        git commit -m "Add changes" -a
+        git commit -m "Add today wallpaper" -a
     - name: Push
       uses: ad-m/github-push-action@master
       with:
