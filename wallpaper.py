@@ -20,7 +20,7 @@ def main():
     Destination filename will be YYYY-mm-dd_{md5dum}.jpg
     """
     dest = './Bing'
-    dest_uhd = './Bing/UHD'
+    dest_uhd = './Bing-UHD'
     bing_url = 'https://bing.com'
     bing_wp_url = 'https://bing.com/HPImageArchive.aspx?format=js&idx=0&n=1'
 
