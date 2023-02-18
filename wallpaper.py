@@ -1,12 +1,8 @@
-import argparse
 import datetime
 import hashlib
 import logging
 import os
-import re
-import shutil
 
-import bs4
 import funcy
 import requests
 
@@ -24,59 +20,60 @@ def main():
     Destination filename will be YYYY-mm-dd_{md5dum}.jpg
     """
     dest = './Bing'
+    dest_uhd = './Bing/UHD'
     bing_url = 'https://bing.com'
-    archive_dir = os.path.join(dest, 'Archive')
+    bing_wp_url = 'https://bing.com/HPImageArchive.aspx?format=js&idx=0&n=1'
 
     try:
-        log.info(f"Connecting to {bing_url}")
-        r = requests.get(bing_url)
-        if not r.ok:
-            raise RuntimeError(f"{r.reason}")
+        log.info("Connecting to %s", bing_url)
+        response = requests.get(url=bing_wp_url, timeout=5000)
+        if not response.ok:
+            raise RuntimeError(f"{response.reason}")
     except:
         log.error(f"Could not get data from {bing_url}. Exiting.")
         return
 
-    img_cont = bs4.BeautifulSoup(
-        r.content, 'html.parser').find_all('div', class_='img_cont')
-    if not img_cont:
-        log.error(f"Could not parse html from {bing_url}. Exiting.")
-        return
-    url = bing_url + re.search(r'\((.+)\)', str(img_cont)).group(1)
-    log.info(f"Found image url in html: {url}")
-    md5sum = hashlib.md5(url.encode('utf-8')).hexdigest()
-    log.info(f"Hash of image url: {md5sum}")
-
-    # Stop if we have this checksum in dest
-    existing_files = os.listdir(dest)
-    log.debug(f"Existing files in {dest} are {existing_files}")
-    if any(md5sum in f for f in existing_files):
-        log.info(f"Found {md5sum} hash in {dest}. Exiting.")
-        return
+    wp_url_1080 = bing_url + response.json()['images'][0]['url']
+    log.info(f"Found 1080P image url in html: {wp_url_1080}")
+    wp_url_uhd = wp_url_1080.replace('1920x1080', 'UHD')
+    log.info(f"Found UHD image url in html: {wp_url_1080}")
+    md5sum_1080 = hashlib.md5(wp_url_1080.encode('utf-8')).hexdigest()
+    log.info(f"Hash of 1080P image url: {md5sum_1080}")
+    md5sum_uhd = hashlib.md5(wp_url_uhd.encode('utf-8')).hexdigest()
+    log.info(f"Hash of UHD image url: {md5sum_uhd}")
 
     # Build the filename
-    image_file = f"{datetime.date.today().isoformat()}_{md5sum}.jpg"
-    image_fullname = os.path.join(dest, image_file)
+    image_file_1080 = f"{datetime.date.today().isoformat()}_{md5sum_1080}.jpg"
+    image_file_uhd = f"{datetime.date.today().isoformat()}_{md5sum_uhd}.jpg"
+    image_fullname_1080 = os.path.join(dest, image_file_1080)
+    image_fullname_uhd = os.path.join(dest_uhd, image_file_uhd)
 
     # Download the file
     try:
-        log.info(f"Downloading {url} to {image_fullname}")
-        r = requests.get(url, allow_redirects=True)
-        if r.ok:
-            with open(image_fullname, 'wb') as f:
-                log.debug(f"Writing to disk as {image_fullname}")
-                f.write(r.content)
+        log.info(f"Downloading {wp_url_1080} to {image_fullname_1080}")
+        response = requests.get(wp_url_1080, allow_redirects=True)
+        if response.ok:
+            with open(image_fullname_1080, 'wb') as f:
+                log.debug(f"Writing to disk as {image_fullname_1080}")
+                f.write(response.content)
         else:
-            log.error(f"Could not download {url}, reason: {r.reason}")
+            log.error(f"Could not download {wp_url_1080}, reason: {response.reason}")
     except:
-        log.error(f"Could not download {url} to {image_fullname}")
+        log.error(f"Could not download {wp_url_1080} to {image_fullname_1080}")
         return
 
-    # Archive the existing jpg files if archive directory exists
-    if os.path.isdir(archive_dir):
-        for f in existing_files:
-            if f.endswith('.jpg'):
-                log.info(f"Archiving {f} to {archive_dir}")
-                shutil.move(os.path.join(dest, f), archive_dir)
+    try:
+        log.info(f"Downloading {wp_url_uhd} to {image_fullname_uhd}")
+        response = requests.get(wp_url_uhd, allow_redirects=True)
+        if response.ok:
+            with open(image_fullname_uhd, 'wb') as f:
+                log.debug(f"Writing to disk as {image_fullname_uhd}")
+                f.write(response.content)
+        else:
+            log.error(f"Could not download {wp_url_uhd}, reason: {response.reason}")
+    except:
+        log.error(f"Could not download {wp_url_uhd} to {image_fullname_uhd}")
+        return
 
     # Done
     log.info('Done')
