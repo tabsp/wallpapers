@@ -30,7 +30,7 @@ jobs:
         github_token: ${{ secrets.TOKEN }}
         branch: ${{ github.ref }}
     - name: Copy file
-      run: cp -r Bing album/assets
+      run: cp -r Bing-UHD album/assets
     - name: Build
       run: |
         cd album
